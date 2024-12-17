@@ -462,6 +462,9 @@ def get_fwd_blobs(kernel_filter : Optional[str], receipt, mask_impl) -> Tuple[Fm
             # no need lse/dropout kernels
             for mask, bias in itertools.product(get_mask_map(mask_impl).keys(), BIAS_MAP.keys()):
                 pipelines.append(FmhaFwdPipeline('qr', 'col', 'f', 'f', 'f', 'f', bias, 'f', 'f', squant, mask))
+                pipelines.append(FmhaFwdPipeline('qr', 'row', 'f', 'f', 'f', 'f', bias, 'f', 'f', squant, mask))
+                pipelines.append(FmhaFwdPipeline('qr', 'col', 'f', 'f', 'f', 'f', bias, 't', 'f', squant, mask))
+                pipelines.append(FmhaFwdPipeline('qr', 'row', 'f', 'f', 'f', 'f', bias, 't', 'f', squant, mask))
         else:
             assert False
         return pipelines
@@ -493,10 +496,8 @@ def get_fwd_blobs(kernel_filter : Optional[str], receipt, mask_impl) -> Tuple[Fm
                     if not fnmatch.fnmatch(k.name, kernel_filter):
                         continue
                 if receipt == 2:
-                    cond = dtype in ['fp16', 'bf16']
-                    cond &= pipeline.F_vlayout == 'row'
+                    cond = dtype in ['fp16', 'bf16', 'fp8']
                     cond &= pipeline.F_bias in ['no', 'alibi']
-                    cond &= pipeline.F_squant == 'f'
                     if not cond:
                         continue
                 api_pool.register_traits(k.api_trait())
